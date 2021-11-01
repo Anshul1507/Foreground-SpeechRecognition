@@ -28,8 +28,6 @@ abstract class SttEngine {
 
     protected abstract var partialRestartActive: Boolean
 
-    protected abstract var closedByUser: Boolean
-
     protected abstract var showProgressView: Boolean
 
     abstract var continuousSpeechRecognition: Boolean

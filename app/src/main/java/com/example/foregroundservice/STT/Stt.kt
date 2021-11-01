@@ -4,8 +4,10 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.fragment.app.FragmentManager
@@ -31,7 +33,6 @@ class Stt(
     override var finalSpeechResultFound: Boolean = false
     override var onReadyForSpeech: Boolean = false
     override var partialRestartActive: Boolean = false
-    override var closedByUser: Boolean = false
     override var showProgressView: Boolean = false
     override var continuousSpeechRecognition: Boolean = true
 
@@ -50,7 +51,51 @@ class Stt(
     }
 
     override fun startSpeechRecognition() {
-        TODO("Not yet implemented")
+        onReadyForSpeech = false
+        if(partialRestartActive) partialRestartActive = false else speechResult.value = ""
+
+        listeningTime = System.currentTimeMillis()
+        pauseAndSpeakTime = listeningTime
+        finalSpeechResultFound = false
+
+        speechRecognizer?.setRecognitionListener(object: RecognitionListener {
+            override fun onReadyForSpeech(p0: Bundle?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onBeginningOfSpeech() {
+                TODO("Not yet implemented")
+            }
+
+            override fun onRmsChanged(p0: Float) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onBufferReceived(p0: ByteArray?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onEndOfSpeech() {
+                TODO("Not yet implemented")
+            }
+
+            override fun onError(p0: Int) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onResults(p0: Bundle?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onPartialResults(p0: Bundle?) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onEvent(p0: Int, p1: Bundle?) {
+                TODO("Not yet implemented")
+            }
+
+        })
     }
 
     override fun restartSpeechRecognition(partialRestart: Boolean) {
