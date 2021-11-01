@@ -7,7 +7,7 @@ import android.os.Build
 
 class App : Application() {
 
-    var NOTIFICATION_CHANNEL_ID = "sttServiceChannel"
+    private val NOTIFICATION_CHANNEL_ID = "sttServiceChannel"
 
     override fun onCreate() {
         super.onCreate()
