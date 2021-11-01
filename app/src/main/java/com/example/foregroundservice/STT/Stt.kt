@@ -1,10 +1,8 @@
 package com.example.foregroundservice.STT
 
-import android.Manifest
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.Handler
@@ -13,10 +11,8 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
-import com.example.foregroundservice.R
 import java.util.*
 
 class Stt(
@@ -39,7 +35,6 @@ class Stt(
     override var onReadyForSpeech: Boolean = false
     override var partialRestartActive: Boolean = false
     override var showProgressView: Boolean = false
-    override var continuousSpeechRecognition: Boolean = true
 
     override var speechResult: MutableLiveData<String> = MutableLiveData()
     override var speechFrequency: MutableLiveData<Float> = MutableLiveData()
@@ -142,15 +137,22 @@ class Stt(
     }
 
     override fun restartSpeechRecognition(partialRestart: Boolean) {
-        TODO("Not yet implemented")
-    }
-
-    override fun cancelSpeechOperations() {
-        TODO("Not yet implemented")
+        restartSpeechHandler.postDelayed({
+            partialRestartActive = partialRestart
+            startSpeechRecognition() //Starting speech recognition after a delay
+        }, 1000L)
     }
 
     override fun closeSpeechOperations() {
-        TODO("Not yet implemented")
+        // Destroying the speech recognizer
+        speechRecognizer?.destroy()
+
+        // Removing any running callbacks if applicable
+        restartSpeechHandler.removeCallbacksAndMessages(null)
+        partialResultSpeechHandler.removeCallbacksAndMessages(null)
+
+        // If audio was muted, resetting it back to normal
+        mute(false)
     }
 
     override fun mute(mute: Boolean) {

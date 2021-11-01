@@ -30,12 +30,9 @@ abstract class SttEngine {
 
     protected abstract var showProgressView: Boolean
 
-    abstract var continuousSpeechRecognition: Boolean
-
     protected abstract var speechResult: MutableLiveData<String>
 
     protected abstract var speechFrequency: MutableLiveData<Float>
-
 
     /**
      * Starts the speech recognition
@@ -47,11 +44,6 @@ abstract class SttEngine {
      * @param partialRestart The partial restart status
      */
     protected abstract fun restartSpeechRecognition(partialRestart: Boolean)
-
-    /**
-     * Cancels the speech operations
-     */
-    protected abstract fun cancelSpeechOperations()
 
     /**
      * Closes the speech operations
