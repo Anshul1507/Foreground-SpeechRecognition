@@ -10,6 +10,7 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
+import java.util.*
 
 class Stt(
     private val app: Application,
@@ -36,6 +37,17 @@ class Stt(
 
     override var speechResult: MutableLiveData<String> = MutableLiveData()
     override var speechFrequency: MutableLiveData<Float> = MutableLiveData()
+
+    init {
+        speechIntent.putExtra(
+            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+        )
+        speechIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        speechIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, app.packageName)
+        speechIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        speechIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+    }
 
     override fun startSpeechRecognition() {
         TODO("Not yet implemented")
