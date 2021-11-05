@@ -22,6 +22,11 @@ import android.os.Build
 import android.os.Messenger
 
 
+/**
+ * Read only purpose
+ * TODO delete this later
+ */
+
 open class BGService : Service(), RecognitionListener {
     companion object {
         var MSG_RECOGNIZER_START_LISTENING = 1
