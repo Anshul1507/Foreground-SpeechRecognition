@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d("test", "onDestroy() called")
-//        stopForegroundService()
+        stopForegroundService()
     }
 
     override fun onRequestPermissionsResult(

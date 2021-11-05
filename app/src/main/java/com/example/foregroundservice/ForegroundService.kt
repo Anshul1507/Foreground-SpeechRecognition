@@ -27,7 +27,7 @@ class ForegroundService : Service() {
 
         startForeground(1, notification)
         MainActivity.stt.startSpeechRecognition()
-        return super.onStartCommand(intent, flags, startId)
+        return START_REDELIVER_INTENT
     }
 
     override fun onBind(p0: Intent?): IBinder? {
