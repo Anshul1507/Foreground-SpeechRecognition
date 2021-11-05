@@ -45,9 +45,10 @@ class Stt(
             RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
         )
         speechIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-        speechIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, app.packageName)
+        speechIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, app.packageName)
         speechIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         speechIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+
     }
 
     override fun startSpeechRecognition() {
@@ -68,11 +69,10 @@ class Stt(
 
             override fun onBufferReceived(buffer: ByteArray?) {}
 
-            override fun onEndOfSpeech() {
-                restartSpeechRecognition(true) //Restart Speech after end of speech
-            }
+            override fun onEndOfSpeech() {}
 
             override fun onError(errorCode: Int) {
+                Log.d("error", getErrorTextFromCode(errorCode))
                 val errDuration = System.currentTimeMillis() - listeningTime
                 if (errDuration < 5000L && errorCode == SpeechRecognizer.ERROR_NO_MATCH && !onReadyForSpeech) return
 
@@ -100,39 +100,39 @@ class Stt(
             }
 
             override fun onResults(results: Bundle?) {
-                val result = results!!.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)!![0]
-                Log.d("test", "result: $result")
+                val result = results.parseSpeechResult()
+                if (result.valid) {
+                    listener.onSttFinalSpeechResult(result.speechResult)
+                    restartSpeechRecognition(true)
+                } else {
+                    restartSpeechRecognition(false)
+                }
             }
 
             override fun onPartialResults(partialResults: Bundle?) {
                 if (finalSpeechResultFound) return
 
-                val partialResult =
-                    partialResults!!.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)!![0]
-                // Sending an update with the live speech result
-                val trimmed = partialResult.trim {
-                    it <= ' '
-                }
-                val partialResultSize =
-                    if (trimmed.isEmpty()) 0 else trimmed.split("\\s+".toRegex()).toTypedArray().size
-                Log.d("test", "result: $partialResult")
+                val partialResult = partialResults.parseSpeechResult()
+                if (partialResult.valid) {
+                    listener.onSttLiveSpeechResult(partialResult.speechResult)
+                    // Updating the speech observer with the live result
+                    speechResult.value = partialResult.speechResult
 
-                listener.onSttLiveSpeechResult(partialResult)
-                // Updating the speech observer with the live result
-                speechResult.value = partialResult
+                    if ((System.currentTimeMillis() - pauseAndSpeakTime) > 1000L) {
+                        // Final Speech result found
+                        finalSpeechResultFound = true
 
-                if ((System.currentTimeMillis() - pauseAndSpeakTime) > 1000L) {
-                    // Final Speech result found
-                    finalSpeechResultFound = true
+                        partialResultSpeechHandler.postDelayed({
+                            closeSpeechOperations()
 
-                    partialResultSpeechHandler.postDelayed({
-                        closeSpeechOperations()
+                            listener.onSttFinalSpeechResult(partialResult.speechResult)
 
-                        listener.onSttFinalSpeechResult(partialResult)
+                            startSpeechRecognition() //starting speech recognition, for continuous speech recog.
 
-                        startSpeechRecognition() //starting speech recognition, for continuous speech recog.
-
-                    }, 500L)
+                        }, 500L)
+                    } else {
+                        pauseAndSpeakTime = System.currentTimeMillis()
+                    }
                 } else {
                     pauseAndSpeakTime = System.currentTimeMillis()
                 }
@@ -167,7 +167,11 @@ class Stt(
     override fun mute(mute: Boolean) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, if (mute) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE, 0)
+                audioManager.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC,
+                    if (mute) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE,
+                    0
+                )
             } else {
                 audioManager.setStreamMute(AudioManager.STREAM_MUSIC, mute)
             }
@@ -175,7 +179,11 @@ class Stt(
             e.printStackTrace()
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                audioManager.adjustStreamVolume(
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_UNMUTE,
+                    0
+                )
             } else {
                 audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false)
             }
@@ -194,6 +202,29 @@ class Stt(
             SpeechRecognizer.ERROR_SERVER -> "error from server"
             SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
             else -> "Didn't understand, please try again."
+        }
+    }
+
+    /**
+     * Speech recognition Parsers
+     */
+    data class SpeechResult(val valid: Boolean, val speechResult: String)
+
+    fun Bundle?.parseSpeechResult(): SpeechResult {
+        if (this == null) return SpeechResult(false, "")
+        if (!this.containsKey(SpeechRecognizer.RESULTS_RECOGNITION)) {
+            return SpeechResult(false, "")
+        }
+        if (this.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION) == null) {
+            return SpeechResult(false, "")
+        }
+
+        val result = this.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)!!
+
+        return if (result.size > 0 && result[0].trim().isNotEmpty()) {
+            SpeechResult(true, result[0].trim())
+        } else {
+            SpeechResult(false, "")
         }
     }
 }
