@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
 import android.util.Log
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -40,11 +41,14 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        findViewById<Button>(R.id.btn_start).setOnClickListener {
+            startForegroundService()
+        }
 
     }
 
     private fun initSttEngine() {
-        stt = Stt(application, supportFragmentManager, object : SttListener {
+        stt = Stt(application, object : SttListener {
             override fun onSttLiveSpeechResult(liveSpeechResult: String) {
                 Log.d(application.packageName, "Speech result - $liveSpeechResult")
             }
@@ -57,6 +61,22 @@ class MainActivity : AppCompatActivity() {
                 Log.d(application.packageName, "Speech error - $errMsg")
             }
         })
+    }
+
+    private fun startForegroundService() {
+        val intent = Intent(this@MainActivity, ForegroundService::class.java)
+        startService(intent)
+    }
+
+    private fun stopForegroundService() {
+        val intent = Intent(this@MainActivity, ForegroundService::class.java)
+        stopService(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("test", "onDestroy() called")
+//        stopForegroundService()
     }
 
     override fun onRequestPermissionsResult(

@@ -26,7 +26,7 @@ class ForegroundService : Service() {
             .build()
 
         startForeground(1, notification)
-
+        MainActivity.stt.startSpeechRecognition()
         return super.onStartCommand(intent, flags, startId)
     }
 

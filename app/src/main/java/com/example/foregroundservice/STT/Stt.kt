@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,13 +12,12 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
-import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
+import java.lang.Exception
 import java.util.*
 
 class Stt(
     private val app: Application,
-    private val manager: FragmentManager,
     private val listener: SttListener
 ) : SttEngine() {
 
@@ -57,8 +57,7 @@ class Stt(
         listeningTime = System.currentTimeMillis()
         pauseAndSpeakTime = listeningTime
         finalSpeechResultFound = false
-
-        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+        speechRecognizer!!.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(p0: Bundle?) {
                 onReadyForSpeech = true
             }
@@ -107,9 +106,17 @@ class Stt(
 
             override fun onPartialResults(partialResults: Bundle?) {
                 if (finalSpeechResultFound) return
+
                 val partialResult =
                     partialResults!!.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)!![0]
                 // Sending an update with the live speech result
+                val trimmed = partialResult.trim {
+                    it <= ' '
+                }
+                val partialResultSize =
+                    if (trimmed.isEmpty()) 0 else trimmed.split("\\s+".toRegex()).toTypedArray().size
+                Log.d("test", "result: $partialResult")
+
                 listener.onSttLiveSpeechResult(partialResult)
                 // Updating the speech observer with the live result
                 speechResult.value = partialResult
@@ -134,6 +141,8 @@ class Stt(
             override fun onEvent(p0: Int, p1: Bundle?) {}
 
         })
+
+        speechRecognizer?.startListening(speechIntent)
     }
 
     override fun restartSpeechRecognition(partialRestart: Boolean) {
@@ -156,7 +165,21 @@ class Stt(
     }
 
     override fun mute(mute: Boolean) {
-        TODO("Not yet implemented")
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, if (mute) AudioManager.ADJUST_MUTE else AudioManager.ADJUST_UNMUTE, 0)
+            } else {
+                audioManager.setStreamMute(AudioManager.STREAM_MUSIC, mute)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+            } else {
+                audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false)
+            }
+        }
     }
 
     fun getErrorTextFromCode(errorCode: Int): String {
