@@ -1,5 +1,6 @@
 package com.example.foregroundservice.STT
 
+import android.R.attr
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -15,6 +16,10 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import java.lang.Exception
 import java.util.*
+import android.R.attr.data
+
+
+
 
 class Stt(
     private val app: Application,
@@ -45,11 +50,14 @@ class Stt(
             RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
         )
         speechIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+        speechIntent.putExtra("android.speech.extra.GET_AUDIO_FORMAT", "audio/AMR");
+        speechIntent.putExtra("android.speech.extra.GET_AUDIO", true);
         speechIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, app.packageName)
         speechIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         speechIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
 
     }
+
 
     override fun startSpeechRecognition() {
         onReadyForSpeech = false
@@ -67,7 +75,10 @@ class Stt(
 
             override fun onRmsChanged(rmsdB: Float) {}
 
-            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onBufferReceived(buffer: ByteArray?) {
+                Log.d("test-audio ", "hey audio")
+                Log.d("test-audio ", buffer.contentToString())
+            }
 
             override fun onEndOfSpeech() {}
 
@@ -100,6 +111,9 @@ class Stt(
             }
 
             override fun onResults(results: Bundle?) {
+                val speechData = speechIntent.extras.parseSpeechResult()
+                Log.d("test simple",speechIntent.dataString.toString())
+                Log.d("test simple",speechIntent.data.toString())
                 val result = results.parseSpeechResult()
                 if (result.valid) {
                     listener.onSttFinalSpeechResult(result.speechResult)

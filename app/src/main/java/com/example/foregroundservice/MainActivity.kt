@@ -12,6 +12,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.foregroundservice.STT.Stt
 import com.example.foregroundservice.STT.SttListener
+import org.vosk.android.SpeechService
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,6 +22,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val PERMISSION_REQUEST_RECORD_AUDIO = 1
+
+    /** VOSK
+     */
+
+    private var speechService: SpeechService?= null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
